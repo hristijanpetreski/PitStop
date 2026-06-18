@@ -1,0 +1,538 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "6e3eab588abb1a6cd83698543d016ee4",
+    "entities": [
+      {
+        "tableName": "vehicles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `make` TEXT NOT NULL, `model` TEXT NOT NULL, `year` INTEGER NOT NULL, `trim` TEXT, `vin` TEXT, `registration` TEXT, `nickname` TEXT, `fuelType` TEXT NOT NULL, `odometerKm` INTEGER, `photoPath` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "make",
+            "columnName": "make",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "model",
+            "columnName": "model",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trim",
+            "columnName": "trim",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "vin",
+            "columnName": "vin",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "registration",
+            "columnName": "registration",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nickname",
+            "columnName": "nickname",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fuelType",
+            "columnName": "fuelType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "odometerKm",
+            "columnName": "odometerKm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "photoPath",
+            "columnName": "photoPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_vehicles_registration",
+            "unique": true,
+            "columnNames": [
+              "registration"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_vehicles_registration` ON `${TABLE_NAME}` (`registration`)"
+          }
+        ]
+      },
+      {
+        "tableName": "refills",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vehicleId` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `odometerKm` INTEGER NOT NULL, `litres` REAL NOT NULL, `totalCostMinor` INTEGER NOT NULL, `isFullTank` INTEGER NOT NULL, `favoritePlaceId` INTEGER, `stationName` TEXT, `latitude` REAL, `longitude` REAL, `notes` TEXT, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`favoritePlaceId`) REFERENCES `favorite_places`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "odometerKm",
+            "columnName": "odometerKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "litres",
+            "columnName": "litres",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalCostMinor",
+            "columnName": "totalCostMinor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFullTank",
+            "columnName": "isFullTank",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "favoritePlaceId",
+            "columnName": "favoritePlaceId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "stationName",
+            "columnName": "stationName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_refills_vehicleId",
+            "unique": false,
+            "columnNames": [
+              "vehicleId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_refills_vehicleId` ON `${TABLE_NAME}` (`vehicleId`)"
+          },
+          {
+            "name": "index_refills_favoritePlaceId",
+            "unique": false,
+            "columnNames": [
+              "favoritePlaceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_refills_favoritePlaceId` ON `${TABLE_NAME}` (`favoritePlaceId`)"
+          },
+          {
+            "name": "index_refills_vehicleId_timestamp",
+            "unique": false,
+            "columnNames": [
+              "vehicleId",
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_refills_vehicleId_timestamp` ON `${TABLE_NAME}` (`vehicleId`, `timestamp`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vehicles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vehicleId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "favorite_places",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "favoritePlaceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "service_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vehicleId` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `title` TEXT NOT NULL, `category` TEXT NOT NULL, `performedBy` TEXT NOT NULL, `odometerKm` INTEGER, `laborCostMinor` INTEGER NOT NULL, `totalCostMinor` INTEGER NOT NULL, `favoritePlaceId` INTEGER, `providerName` TEXT, `latitude` REAL, `longitude` REAL, `notes` TEXT, `nextServiceAt` INTEGER, `nextServiceOdometerKm` INTEGER, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`favoritePlaceId`) REFERENCES `favorite_places`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "performedBy",
+            "columnName": "performedBy",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "odometerKm",
+            "columnName": "odometerKm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "laborCostMinor",
+            "columnName": "laborCostMinor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalCostMinor",
+            "columnName": "totalCostMinor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "favoritePlaceId",
+            "columnName": "favoritePlaceId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "providerName",
+            "columnName": "providerName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nextServiceAt",
+            "columnName": "nextServiceAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "nextServiceOdometerKm",
+            "columnName": "nextServiceOdometerKm",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_service_records_vehicleId",
+            "unique": false,
+            "columnNames": [
+              "vehicleId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_service_records_vehicleId` ON `${TABLE_NAME}` (`vehicleId`)"
+          },
+          {
+            "name": "index_service_records_favoritePlaceId",
+            "unique": false,
+            "columnNames": [
+              "favoritePlaceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_service_records_favoritePlaceId` ON `${TABLE_NAME}` (`favoritePlaceId`)"
+          },
+          {
+            "name": "index_service_records_vehicleId_timestamp",
+            "unique": false,
+            "columnNames": [
+              "vehicleId",
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_service_records_vehicleId_timestamp` ON `${TABLE_NAME}` (`vehicleId`, `timestamp`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vehicles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vehicleId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "favorite_places",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "favoritePlaceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "service_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serviceRecordId` INTEGER NOT NULL, `description` TEXT NOT NULL, `quantity` INTEGER NOT NULL, `unitCostMinor` INTEGER NOT NULL, FOREIGN KEY(`serviceRecordId`) REFERENCES `service_records`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceRecordId",
+            "columnName": "serviceRecordId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitCostMinor",
+            "columnName": "unitCostMinor",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_service_items_serviceRecordId",
+            "unique": false,
+            "columnNames": [
+              "serviceRecordId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_service_items_serviceRecordId` ON `${TABLE_NAME}` (`serviceRecordId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "service_records",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "serviceRecordId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "favorite_places",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `type` TEXT NOT NULL, `address` TEXT, `latitude` REAL, `longitude` REAL, `notes` TEXT, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_favorite_places_name",
+            "unique": false,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_favorite_places_name` ON `${TABLE_NAME}` (`name`)"
+          },
+          {
+            "name": "index_favorite_places_latitude_longitude",
+            "unique": false,
+            "columnNames": [
+              "latitude",
+              "longitude"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_favorite_places_latitude_longitude` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6e3eab588abb1a6cd83698543d016ee4')"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Triggered by a transitive Places SDK Glide class; PitStop does not post notifications. -->
+    <issue id="NotificationPermission" severity="ignore" />
+</lint>
