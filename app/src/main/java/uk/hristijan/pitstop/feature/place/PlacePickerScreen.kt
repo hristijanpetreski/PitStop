@@ -23,6 +23,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -50,6 +58,7 @@ import uk.hristijan.pitstop.app.LocalAppContainer
 
 private enum class PickerMode { FAVORITES, SEARCH, PIN }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlacePickerScreen(
     onPlaceSelected: (SelectedPlace) -> Unit,
@@ -99,48 +108,57 @@ fun PlacePickerScreen(
         else permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
-    Column(modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, top = 20.dp, end = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text("Choose a place", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text("Saved, searched, or pinned", style = MaterialTheme.typography.bodyMedium)
-            }
-            OutlinedButton(onClick = onCancel) { Text("Cancel") }
-        }
-        Button(
-            onClick = requestCurrentLocation,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
-        ) { Text("Use current location") }
-        locationMessage?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 20.dp),
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Choose a place") },
+                navigationIcon = {
+                    IconButton(onClick = onCancel) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Cancel")
+                    }
+                }
             )
         }
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PickerMode.entries.forEach { candidate ->
-                FilterChip(
-                    selected = mode == candidate,
-                    onClick = { mode = candidate },
-                    label = { Text(if (candidate == PickerMode.PIN) "Map pin" else candidate.name.lowercase().replaceFirstChar(Char::uppercase)) },
+    ) { innerPadding ->
+        Column(Modifier.fillMaxSize().padding(innerPadding)) {
+            Text(
+                "Saved, searched, or pinned",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+            )
+            Button(
+                onClick = requestCurrentLocation,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            ) { Text("Use current location") }
+            locationMessage?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
-        }
-        when (mode) {
-            PickerMode.FAVORITES -> FavoriteChoices(favorites.mapNotNull { it.toSelectedPlace() }, onPlaceSelected)
-            PickerMode.SEARCH -> PlaceSearch(search, viewModel::setQuery, viewModel::search) {
-                viewModel.selectPrediction(it, onPlaceSelected)
+            Row(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                PickerMode.entries.forEach { candidate ->
+                    FilterChip(
+                        selected = mode == candidate,
+                        onClick = { mode = candidate },
+                        label = { Text(if (candidate == PickerMode.PIN) "Map pin" else candidate.name.lowercase().replaceFirstChar(Char::uppercase)) },
+                    )
+                }
             }
-            PickerMode.PIN -> ManualPinPicker(onPlaceSelected)
+            when (mode) {
+                PickerMode.FAVORITES -> FavoriteChoices(favorites.mapNotNull { it.toSelectedPlace() }, onPlaceSelected)
+                PickerMode.SEARCH -> PlaceSearch(search, viewModel::setQuery, viewModel::search) {
+                    viewModel.selectPrediction(it, onPlaceSelected)
+                }
+                PickerMode.PIN -> ManualPinPicker(onPlaceSelected)
+            }
         }
     }
 }
@@ -211,8 +229,12 @@ private fun ManualPinPicker(onSelected: (SelectedPlace) -> Unit) {
     val cameraState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(41.9981, 21.4254), 10f)
     }
+    val context = LocalContext.current
     LaunchedEffect(pin) {
-        pin?.let { cameraState.animate(CameraUpdateFactory.newLatLng(it)) }
+        pin?.let {
+            MapsInitializer.initialize(context)
+            cameraState.animate(CameraUpdateFactory.newLatLng(it))
+        }
     }
     Box(Modifier.fillMaxSize()) {
         GoogleMap(

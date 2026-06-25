@@ -40,6 +40,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -182,7 +191,14 @@ fun VehicleEditorContent(
                     onClick = { picker.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
                     modifier = Modifier.weight(1f),
                 ) { Text(if (state.photoPath == null) "Choose photo" else "Change photo") }
-                if (state.photoPath != null) TextButton(onClick = actions.onRemovePhoto) { Text("Remove") }
+                if (state.photoPath != null) {
+                    TextButton(
+                        onClick = actions.onRemovePhoto,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Remove")
+                    }
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 FormField(state.make, actions.onMakeChange, "Make *", state.makeError, Modifier.weight(1f))
@@ -246,7 +262,12 @@ fun GarageScreen(
     }
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Garage") }, actions = { TextButton(onClick = onAddVehicle) { Text("Add vehicle") } }) },
+        topBar = { TopAppBar(title = { Text("Garage") }) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddVehicle) {
+                Icon(Icons.Default.Add, contentDescription = "Add vehicle")
+            }
+        },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         when {
@@ -275,7 +296,14 @@ fun GarageScreen(
             onDismissRequest = { pendingDelete = null },
             title = { Text("Delete ${vehicle.title()}?") },
             text = { Text("Fuel and service records linked to this vehicle may also be removed. This cannot be undone.") },
-            confirmButton = { TextButton(onClick = { viewModel.deleteVehicle(vehicle.id); pendingDelete = null }) { Text("Delete") } },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.deleteVehicle(vehicle.id); pendingDelete = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
             dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } },
         )
     }
@@ -293,16 +321,53 @@ private fun VehicleCard(vehicle: Vehicle, selected: Boolean, onSelect: () -> Uni
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(vehicle.title(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    if (selected) Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primary) {
-                        Text("ACTIVE", Modifier.padding(horizontal = 9.dp, vertical = 4.dp), color = MaterialTheme.colorScheme.onPrimary,
-                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    if (selected) Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Text(
+                            text = "ACTIVE",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
                 Text("${vehicle.year} · ${vehicle.make} ${vehicle.model}", style = MaterialTheme.typography.bodyMedium)
                 vehicle.registration?.let { Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = onEdit, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("Edit") }
-                    TextButton(onClick = onDelete, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("Delete") }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onEdit,
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Edit", style = MaterialTheme.typography.labelLarge)
+                    }
+                    OutlinedButton(
+                        onClick = onDelete,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f)),
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Delete", style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
         }

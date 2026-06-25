@@ -35,7 +35,13 @@ fun PitStopTopAppBar(
     onEdit: (() -> Unit)? = null,
 ) {
     CenterAlignedTopAppBar(
-        title = { Text(title) },
+        title = {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        },
         navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {

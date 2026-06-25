@@ -18,6 +18,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Garage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,6 +36,8 @@ import uk.hristijan.pitstop.core.format.formatEfficiency
 import uk.hristijan.pitstop.core.format.formatMoney
 import uk.hristijan.pitstop.ui.components.EmptyState
 import uk.hristijan.pitstop.ui.components.LoadingState
+import androidx.compose.material.icons.outlined.Settings
+import uk.hristijan.pitstop.app.LocalCurrency
 
 @Composable
 fun DashboardRoute(
@@ -39,8 +45,7 @@ fun DashboardRoute(
     onGarage: () -> Unit,
     onAddRefill: () -> Unit,
     onAddService: () -> Unit,
-    onHistory: () -> Unit,
-    onMap: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val container = LocalAppContainer.current
     val vm: DashboardViewModel = viewModel(
@@ -48,7 +53,7 @@ fun DashboardRoute(
         factory = DashboardViewModel.Factory(vehicleId, container.vehicleRepository, container.dashboardRepository),
     )
     val state by vm.state.collectAsState()
-    DashboardScreen(state, onGarage, onAddRefill, onAddService, onHistory, onMap)
+    DashboardScreen(state, onGarage, onAddRefill, onAddService, onSettings)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,10 +63,10 @@ fun DashboardScreen(
     onGarage: () -> Unit,
     onAddRefill: () -> Unit,
     onAddService: () -> Unit,
-    onHistory: () -> Unit,
-    onMap: () -> Unit,
+    onSettings: () -> Unit,
 ) {
-    Scaffold(topBar = { TopAppBar(title = { Text("Dashboard") }, actions = { OutlinedButton(onClick = onGarage) { Text("Garage") } }) }) { padding ->
+    val currencyCode = LocalCurrency.current
+    Scaffold(topBar = { TopAppBar(title = { Text("Dashboard") }, actions = { IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = "Settings") }; IconButton(onClick = onGarage) { Icon(Icons.Outlined.Garage, contentDescription = "Garage") } }) }) { padding ->
         when {
             state.loading -> LoadingState(Modifier.fillMaxSize().padding(padding))
             state.vehicle == null -> EmptyState("Vehicle unavailable", "Choose a vehicle from your garage.", Modifier.padding(padding), "Open garage", onGarage)
@@ -93,15 +98,9 @@ fun DashboardScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("At a glance", style = MaterialTheme.typography.titleLarge)
                         StatCard("Fuel efficiency", formatEfficiency(summary?.averageFuelEfficiency))
-                        StatCard("Fuel spend", formatMoney(summary?.totalFuelCostMinor ?: 0))
-                        StatCard("Service spend", formatMoney(summary?.totalServiceCostMinor ?: 0))
-                        StatCard("Total running cost", formatMoney(summary?.totalCostMinor ?: 0))
-                    }
-                }
-                item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(onClick = onHistory, modifier = Modifier.weight(1f)) { Text("History") }
-                        OutlinedButton(onClick = onMap, modifier = Modifier.weight(1f)) { Text("Map") }
+                        StatCard("Fuel spend", formatMoney(summary?.totalFuelCostMinor ?: 0, currencyCode))
+                        StatCard("Service spend", formatMoney(summary?.totalServiceCostMinor ?: 0, currencyCode))
+                        StatCard("Total running cost", formatMoney(summary?.totalCostMinor ?: 0, currencyCode))
                     }
                 }
             }

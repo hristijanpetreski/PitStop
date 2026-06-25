@@ -6,24 +6,34 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -32,9 +42,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Directions
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.LocalGasStation
+import androidx.compose.material.icons.outlined.LocalParking
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -136,6 +159,13 @@ fun FavoritesScreen(
     }
 }
 
+private fun getPlaceIcon(type: FavoritePlaceType) = when (type) {
+    FavoritePlaceType.FUEL_STATION -> Icons.Outlined.LocalGasStation
+    FavoritePlaceType.SERVICE_CENTER -> Icons.Outlined.Build
+    FavoritePlaceType.PARKING -> Icons.Outlined.LocalParking
+    FavoritePlaceType.OTHER -> Icons.Outlined.Place
+}
+
 @Composable
 private fun FavoriteRow(
     place: FavoritePlace,
@@ -144,21 +174,144 @@ private fun FavoriteRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(place.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(place.type.name.replace('_', ' '), style = MaterialTheme.typography.labelMedium)
-            place.address?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                TextButton(onClick = onUse, enabled = place.latitude != null && place.longitude != null) { Text("Use") }
-                TextButton(onClick = onNavigate, enabled = place.latitude != null && place.longitude != null) { Text("Map") }
-                TextButton(onClick = onEdit) { Text("Edit") }
-                TextButton(onClick = onDelete) { Text("Delete") }
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                // Leading Icon container
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = getPlaceIcon(place.type),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+
+                // Middle details
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = place.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    val formattedType = place.type.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
+                    val infoText = buildString {
+                        append(formattedType)
+                        if (!place.address.isNullOrBlank()) {
+                            append(" • ")
+                            append(place.address)
+                        }
+                    }
+                    Text(
+                        text = infoText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!place.notes.isNullOrBlank()) {
+                        Text(
+                            text = place.notes,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                // Trailing options menu
+                Box {
+                    var expanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Edit") },
+                            onClick = {
+                                expanded = false
+                                onEdit()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                expanded = false
+                                onDelete()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Bottom action buttons
+            val hasCoordinates = place.latitude != null && place.longitude != null
+            if (hasCoordinates) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilledTonalButton(
+                        onClick = onUse,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Use Place")
+                    }
+                    OutlinedButton(
+                        onClick = onNavigate,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Directions,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Navigate")
+                    }
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FavoriteEditor(
     place: FavoritePlace?,
@@ -212,14 +365,54 @@ private fun FavoriteEditor(
         LocationInputMode.MANUAL -> (latitude.isBlank() && longitude.isBlank()) || validCoordinatePair
     }
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (place == null) "Add favorite" else "Edit favorite") },
-        text = {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                item { OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true) }
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(if (place == null) "Add favorite" else "Edit favorite") },
+                    navigationIcon = {
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Default.Close, contentDescription = "Close")
+                        }
+                    },
+                    actions = {
+                        TextButton(
+                            enabled = name.isNotBlank() && coordinatesValid,
+                            onClick = { onSave(place?.id ?: 0, name, type, address, lat, lng, notes) }
+                        ) {
+                            Text("Save")
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                item {
+                    Text(
+                        text = "Category",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(FavoritePlaceType.entries) { candidate ->
                             FilterChip(
                                 selected = type == candidate,
@@ -229,8 +422,21 @@ private fun FavoriteEditor(
                         }
                     }
                 }
-                item { OutlinedTextField(address, { address = it }, label = { Text("Address") }) }
                 item {
+                    OutlinedTextField(
+                        value = address,
+                        onValueChange = { address = it },
+                        label = { Text("Address") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                item {
+                    Text(
+                        text = "Location Coordinates",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(LocationInputMode.entries) { mode ->
                             FilterChip(
@@ -246,7 +452,8 @@ private fun FavoriteEditor(
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(onClick = ::requestCurrentLocation, modifier = Modifier.fillMaxWidth()) {
                                 Icon(Icons.Outlined.MyLocation, contentDescription = null)
-                                Text(" Use current location")
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Use current location")
                             }
                             locationStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                             if (validCoordinatePair) {
@@ -257,22 +464,33 @@ private fun FavoriteEditor(
                 } else {
                     item {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(latitude, { latitude = it }, label = { Text("Latitude") }, modifier = Modifier.weight(1f))
-                            OutlinedTextField(longitude, { longitude = it }, label = { Text("Longitude") }, modifier = Modifier.weight(1f))
+                            OutlinedTextField(
+                                value = latitude,
+                                onValueChange = { latitude = it },
+                                label = { Text("Latitude") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = longitude,
+                                onValueChange = { longitude = it },
+                                label = { Text("Longitude") },
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
-                item { OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }) }
+                item {
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Notes") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3
+                    )
+                }
             }
-        },
-        confirmButton = {
-            Button(
-                enabled = name.isNotBlank() && coordinatesValid,
-                onClick = { onSave(place?.id ?: 0, name, type, address, lat, lng, notes) },
-            ) { Text("Save") }
-        },
-        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+        }
+    }
 }
 
 private enum class LocationInputMode { CURRENT, MANUAL }

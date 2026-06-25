@@ -28,6 +28,7 @@ object AppRoutes {
     const val EDIT_SERVICE = "service/{serviceId}/edit"
     const val SERVICE_DETAIL = "service/{serviceId}"
     const val PLACE_PICKER = "place-picker"
+    const val SETTINGS = "settings"
 
     fun editVehicle(id: Long) = "vehicle/$id"
     fun refill(id: Long) = "refill/$id"

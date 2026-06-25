@@ -44,12 +44,24 @@ import uk.hristijan.pitstop.feature.vehicle.AddEditVehicleScreen
 import uk.hristijan.pitstop.feature.vehicle.FirstVehicleOnboardingScreen
 import uk.hristijan.pitstop.feature.vehicle.GarageScreen
 import uk.hristijan.pitstop.ui.components.LoadingState
+import uk.hristijan.pitstop.feature.settings.SettingsScreen
+import androidx.compose.runtime.staticCompositionLocalOf
+
+val LocalCurrency = staticCompositionLocalOf<String> {
+    "EUR"
+}
+
 
 @Composable
 fun PitStopApp() {
     val application = LocalContext.current.applicationContext as PitStopApplication
-    CompositionLocalProvider(LocalAppContainer provides application.container) {
-        val session: AppSessionViewModel = viewModel(factory = AppSessionViewModel.Factory(application.container))
+    val container = application.container
+    val currency by container.userSettingsPreferences.currency.collectAsState(initial = "EUR")
+    CompositionLocalProvider(
+        LocalAppContainer provides container,
+        LocalCurrency provides currency
+    ) {
+        val session: AppSessionViewModel = viewModel(factory = AppSessionViewModel.Factory(container))
         val state by session.state.collectAsState()
         when {
             state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LoadingState() }
@@ -103,8 +115,7 @@ private fun PitStopNavigationShell(vehicleId: Long) {
                     onGarage = { navController.navigate(AppRoutes.GARAGE) },
                     onAddRefill = { navController.navigate(AppRoutes.ADD_REFILL) },
                     onAddService = { navController.navigate(AppRoutes.ADD_SERVICE) },
-                    onHistory = { navController.navigate(AppRoutes.HISTORY) },
-                    onMap = { navController.navigate(AppRoutes.MAP) },
+                    onSettings = { navController.navigate(AppRoutes.SETTINGS) },
                 )
             }
             composable(AppRoutes.HISTORY) {
@@ -142,7 +153,7 @@ private fun PitStopNavigationShell(vehicleId: Long) {
             composable(AppRoutes.GARAGE) {
                 GarageScreen(
                     onAddVehicle = { navController.navigate(AppRoutes.ADD_VEHICLE) },
-                    onEditVehicle = { navController.navigate(AppRoutes.editVehicle(it)) },
+                    onEditVehicle = { id -> navController.navigate(AppRoutes.editVehicle(id)) },
                     onVehicleSelected = { navController.openTopLevel(AppRoutes.HOME) },
                 )
             }
@@ -153,9 +164,12 @@ private fun PitStopNavigationShell(vehicleId: Long) {
                 AddEditVehicleScreen(entry.arguments?.getLong("vehicleId"), onSaved = { navController.popBackStack() }, onCancel = { navController.popBackStack() })
             }
             composable(AppRoutes.ADD_REFILL) {
+                val currencyCode = LocalCurrency.current
+                val symbol = remember(currencyCode) { java.util.Currency.getInstance(currencyCode).getSymbol(java.util.Locale.getDefault()) }
                 RefillFormRoute(
                     vehicleId = vehicleId,
                     placeValue = pendingRefillPlace,
+                    currencySymbol = symbol,
                     onChoosePlace = { navController.navigate(AppRoutes.PLACE_PICKER) },
                     onSaved = { id -> pendingRefillPlace = null; navController.navigate(AppRoutes.refill(id)) { popUpTo(AppRoutes.ADD_REFILL) { inclusive = true } } },
                     onCancel = { pendingRefillPlace = null; navController.popBackStack() },
@@ -163,11 +177,15 @@ private fun PitStopNavigationShell(vehicleId: Long) {
             }
             composable(AppRoutes.EDIT_REFILL, arguments = listOf(navArgument("refillId") { type = NavType.LongType })) { entry ->
                 val id = entry.arguments?.getLong("refillId") ?: return@composable
-                RefillFormRoute(vehicleId, id, pendingRefillPlace, onChoosePlace = { navController.navigate(AppRoutes.PLACE_PICKER) }, onSaved = { navController.popBackStack() }, onCancel = { navController.popBackStack() })
+                val currencyCode = LocalCurrency.current
+                val symbol = remember(currencyCode) { java.util.Currency.getInstance(currencyCode).getSymbol(java.util.Locale.getDefault()) }
+                RefillFormRoute(vehicleId, id, pendingRefillPlace, currencySymbol = symbol, onChoosePlace = { navController.navigate(AppRoutes.PLACE_PICKER) }, onSaved = { navController.popBackStack() }, onCancel = { navController.popBackStack() })
             }
             composable(AppRoutes.REFILL_DETAIL, arguments = listOf(navArgument("refillId") { type = NavType.LongType })) { entry ->
                 val id = entry.arguments?.getLong("refillId") ?: return@composable
-                RefillDetailRoute(id, onBack = { navController.popBackStack() }, onEdit = { navController.navigate(AppRoutes.editRefill(it)) }, onDeleted = { navController.popBackStack() })
+                val currencyCode = LocalCurrency.current
+                val symbol = remember(currencyCode) { java.util.Currency.getInstance(currencyCode).getSymbol(java.util.Locale.getDefault()) }
+                RefillDetailRoute(id, currencySymbol = symbol, onBack = { navController.popBackStack() }, onEdit = { navController.navigate(AppRoutes.editRefill(it)) }, onDeleted = { navController.popBackStack() })
             }
             composable(AppRoutes.ADD_SERVICE) {
                 ServiceFormScreen(vehicleId, onSaved = { navController.navigate(AppRoutes.service(it)) { popUpTo(AppRoutes.ADD_SERVICE) { inclusive = true } } }, onCancel = { navController.popBackStack() })
@@ -194,14 +212,20 @@ private fun PitStopNavigationShell(vehicleId: Long) {
                     onCancel = { navController.popBackStack() },
                 )
             }
+            composable(AppRoutes.SETTINGS) {
+                SettingsScreen(onBack = { navController.popBackStack() })
+            }
         }
     }
 }
 
 private fun NavHostController.openTopLevel(route: String) {
+    val startDestination = graph.findStartDestination()
     navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
+        popUpTo(startDestination.id) { saveState = true }
         launchSingleTop = true
-        restoreState = true
+        if (route != startDestination.route) {
+            restoreState = true
+        }
     }
 }

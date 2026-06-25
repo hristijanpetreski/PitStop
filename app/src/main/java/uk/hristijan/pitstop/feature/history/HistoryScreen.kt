@@ -28,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import uk.hristijan.pitstop.app.LocalCurrency
+import uk.hristijan.pitstop.core.format.formatMoney
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -167,7 +169,7 @@ fun HistoryContent(
 
 @Composable
 private fun HistoryRow(entry: HistoryEntry, onClick: () -> Unit) {
-    val currency = NumberFormat.getCurrencyInstance()
+    val currencyCode = LocalCurrency.current
     val date = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(entry.timestamp))
     Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
@@ -190,7 +192,7 @@ private fun HistoryRow(entry: HistoryEntry, onClick: () -> Unit) {
                 is HistoryEntry.RefillEntry -> entry.refill.totalCostMinor
                 is HistoryEntry.ServiceEntry -> entry.service.totalCostMinor
             }
-            Text(currency.format(cost / 100.0), fontWeight = FontWeight.Bold)
+            Text(formatMoney(cost, currencyCode), fontWeight = FontWeight.Bold)
         }
     }
 }

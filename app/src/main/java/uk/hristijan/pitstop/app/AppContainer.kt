@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import uk.hristijan.pitstop.data.local.PitStopDatabase
 import uk.hristijan.pitstop.data.preferences.SelectedVehiclePreferences
+import uk.hristijan.pitstop.data.preferences.UserSettingsPreferences
 import uk.hristijan.pitstop.data.repository.DashboardRepository
 import uk.hristijan.pitstop.data.repository.FavoritePlaceRepository
 import uk.hristijan.pitstop.data.repository.LocalDashboardRepository
@@ -24,6 +25,7 @@ private val Context.pitStopDataStore by preferencesDataStore(name = "pitstop_pre
 interface AppContainer {
     val preferences: DataStore<Preferences>
     val selectedVehiclePreferences: SelectedVehiclePreferences
+    val userSettingsPreferences: UserSettingsPreferences
     val vehicleRepository: VehicleRepository
     val refillRepository: RefillRepository
     val serviceRepository: ServiceRepository
@@ -35,6 +37,7 @@ class DefaultAppContainer(context: Context) : AppContainer {
     override val preferences: DataStore<Preferences> = context.pitStopDataStore
     private val database = PitStopDatabase.getInstance(context)
     override val selectedVehiclePreferences = SelectedVehiclePreferences(preferences)
+    override val userSettingsPreferences = UserSettingsPreferences(preferences)
     override val vehicleRepository = LocalVehicleRepository(database.vehicleDao())
     override val refillRepository = LocalRefillRepository(database.refillDao())
     override val serviceRepository = LocalServiceRepository(database.serviceRecordDao())
